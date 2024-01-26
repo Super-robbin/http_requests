@@ -1,35 +1,66 @@
 import { useEffect, useState } from "react";
 import Places from "./Places.jsx";
+import Error from "./Error.jsx";
+import { sortPlacesByDistance } from "../loc.js";
+import { fetchAvailablePlaces } from "../http.js";
 
 export default function AvailablePlaces({ onSelectPlace }) {
   const [isFetching, setIsFetching] = useState(false);
   const [availablePlaces, setAvailablePlaces] = useState([]);
+  const [error, setError] = useState();
 
-  useEffect(() => {
-    setIsFetching(true);
-    fetch("http://localhost:3000/places")
-      .then((response) => {
-        return response.json();
-      })
-      .then((resData) => {
-        setAvailablePlaces(resData.places);
-        setIsFetching(false)
-      });
-  }, []);
+  // useEffect(() => {
+  //   setIsFetching(true);
+  //   fetch("http://localhost:3000/places")
+  //     .then((response) => {
+  //       return response.json();
+  //     })
+  //     .then((resData) => {
+  //       setAvailablePlaces(resData.places);
+  //       setIsFetching(false)
+  //     });
+  // }, []);
 
   // Alternatively, we can use async/await but it is not allowed inside the useEffect,
   // therefore we have to create a function and call it at the end, outside the function,
   // but inside the useEffect.
 
-  // useEffect(() => {
-  //   const fetchPlaces = async () => {
-  //     const response = await fetch("http://localhost:3000/places");
-  //     const resData = await response.json();
-  //     setAvailablePlaces(resData.places);
-  //   };
+  // We use try and catch so that the application won't crash.
+  // We then create a http.js file and move the code inside there as helper function.
+  // We import the fetchAvailablePlaces() and use it below to have cleaner code.
+  // IMPORTANT: Make sure to use await and store the result inside a variable
 
-  //   fetchPlaces();
-  // }, []);
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      setIsFetching(true);
+      try {
+       const places =  await fetchAvailablePlaces();
+
+        navigator.geolocation.getCurrentPosition((position) => {
+          const sortedPlaces = sortPlacesByDistance(
+            places,
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          setAvailablePlaces(sortedPlaces);
+          setIsFetching(false);
+        });
+      } catch (error) {
+        console.log(error);
+        setError({
+          message:
+            error.message || "Could not fetch places, please try again later!",
+        });
+        setIsFetching(false);
+      }
+    };
+
+    fetchPlaces();
+  }, []);
+
+  if (error) {
+    return <Error title="An error occurred!" message={error.message} />;
+  }
 
   return (
     <Places
