@@ -3,11 +3,30 @@ import Places from "./Places.jsx";
 import Error from "./Error.jsx";
 import { sortPlacesByDistance } from "../loc.js";
 import { fetchAvailablePlaces } from "../http.js";
+import { useFetch } from "../hooks/useFetch.js";
+
+const fetchSortedPlaces = async () => {
+  const places = await fetchAvailablePlaces();
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const sortedPlaces = sortPlacesByDistance(
+        places,
+        position.coords.latitude,
+        position.coords.longitude
+      );
+
+      resolve(sortedPlaces)
+    });
+  });
+};
 
 export default function AvailablePlaces({ onSelectPlace }) {
-  const [isFetching, setIsFetching] = useState(false);
-  const [availablePlaces, setAvailablePlaces] = useState([]);
-  const [error, setError] = useState();
+  const {
+    isFetching,
+    fetchedData: availablePlaces,
+    error,
+    setFetchData: setAvailablePlaces,
+  } = useFetch(fetchAvailablePlaces, []);
 
   // useEffect(() => {
   //   setIsFetching(true);
@@ -30,33 +49,32 @@ export default function AvailablePlaces({ onSelectPlace }) {
   // We import the fetchAvailablePlaces() and use it below to have cleaner code.
   // IMPORTANT: Make sure to use await and store the result inside a variable
 
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      setIsFetching(true);
-      try {
-       const places =  await fetchAvailablePlaces();
+  // useEffect(() => {
+  //   const fetchPlaces = async () => {
+  //     setIsFetching(true);
+  //     try {
+  //       const places = await fetchAvailablePlaces();
+  //       navigator.geolocation.getCurrentPosition((position) => {
+  //         const sortedPlaces = sortPlacesByDistance(
+  //           places,
+  //           position.coords.latitude,
+  //           position.coords.longitude
+  //         );
+  //         setAvailablePlaces(sortedPlaces);
+  //         setIsFetching(false);
+  //       });
+  //     } catch (error) {
+  //       console.log(error);
+  //       setError({
+  //         message:
+  //           error.message || "Could not fetch places, please try again later!",
+  //       });
+  //       setIsFetching(false);
+  //     }
+  //   };
 
-        navigator.geolocation.getCurrentPosition((position) => {
-          const sortedPlaces = sortPlacesByDistance(
-            places,
-            position.coords.latitude,
-            position.coords.longitude
-          );
-          setAvailablePlaces(sortedPlaces);
-          setIsFetching(false);
-        });
-      } catch (error) {
-        console.log(error);
-        setError({
-          message:
-            error.message || "Could not fetch places, please try again later!",
-        });
-        setIsFetching(false);
-      }
-    };
-
-    fetchPlaces();
-  }, []);
+  //   fetchPlaces();
+  // }, []);
 
   if (error) {
     return <Error title="An error occurred!" message={error.message} />;

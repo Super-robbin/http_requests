@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 
 import Places from "./components/Places.jsx";
 import Modal from "./components/Modal.jsx";
@@ -23,7 +23,14 @@ function App() {
   // IMPORTANT: If we use the function that contains the state inside a component,
   // for example here in the App component, and the state updates inside the function,
   // the component where the function is used will execute again, same as if the state was here.
-  const { isFetching, fetchedData, error } = useFetch(fetchUserPlaces);
+  // Also, if we use useFetch inside another component, this won't affect the App component,
+  // because everytime we use it, a brand-new copy will be created.
+  const {
+    isFetching,
+    fetchedData: userPlaces,
+    error,
+    setFetchedData: setUserPlaces,
+  } = useFetch(fetchUserPlaces, []);
 
   function handleStartRemovePlace(place) {
     setModalIsOpen(true);
@@ -76,7 +83,7 @@ function App() {
 
       setModalIsOpen(false);
     },
-    [userPlaces]
+    [userPlaces, setUserPlaces]
   );
 
   const handleError = () => {
@@ -118,12 +125,14 @@ function App() {
             fallbackText="Select the places you would like to visit below."
             isLoading={isFetching}
             loadingText="Fetching your places..."
-            places={fetchedData}
+            places={userPlaces}
             onSelectPlace={handleStartRemovePlace}
           />
         )}
 
-        <AvailablePlaces onSelectPlace={handleSelectPlace} />
+        <AvailablePlaces
+        onSelectPlace={handleSelectPlace}
+        />
       </main>
     </>
   );

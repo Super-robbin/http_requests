@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
 // Make sure the name starts with use, to be recognised by React as an hook function.
-export const useFetch = (fetchFn) => {
+export const useFetch = (fetchFn, initialValue) => {
   const [isFetching, setIsFetching] = useState();
   const [error, setError] = useState();
-  const [fetchedData, setFetchedData] = useState();
+  const [fetchedData, setFetchedData] = useState(initialValue);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,6 +24,7 @@ export const useFetch = (fetchFn) => {
   return {
     isFetching,
     fetchedData,
-    error
+    error,
+    setFetchedData
   }
 };
