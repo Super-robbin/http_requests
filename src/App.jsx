@@ -7,32 +7,23 @@ import logoImg from "./assets/logo.png";
 import AvailablePlaces from "./components/AvailablePlaces.jsx";
 import { updateUserPlaces, fetchUserPlaces } from "./http.js";
 import Error from "./components/Error.jsx";
+import { useFetch } from "./hooks/useFetch.js";
 
 function App() {
   const selectedPlace = useRef();
-
-  const [userPlaces, setUserPlaces] = useState([]);
-  const [isFetching, setIsFetching] = useState(false);
-  const [error, setError] = useState();
 
   const [errorUpdatingPlaces, setErrorUpdatingPlaces] = useState();
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      setIsFetching(true);
-      try {
-        const userPlaces = await fetchUserPlaces();
-        setUserPlaces(userPlaces);
-      } catch (error) {
-        setError({
-          message: error.message || "Could not fetch user places.",
-        });
-      }
-      setIsFetching(false);
-    };
-  }, []);
+  // We got rid of useEffect and the states above, we use the custom hook now,
+  // passing fetchUserPlaces as a function parameter.
+  // Since useFetch is returning the values from the useState,
+  // we use destructuring like shown below.
+  // IMPORTANT: If we use the function that contains the state inside a component,
+  // for example here in the App component, and the state updates inside the function,
+  // the component where the function is used will execute again, same as if the state was here.
+  const { isFetching, fetchedData, error } = useFetch(fetchUserPlaces);
 
   function handleStartRemovePlace(place) {
     setModalIsOpen(true);
@@ -127,7 +118,7 @@ function App() {
             fallbackText="Select the places you would like to visit below."
             isLoading={isFetching}
             loadingText="Fetching your places..."
-            places={userPlaces}
+            places={fetchedData}
             onSelectPlace={handleStartRemovePlace}
           />
         )}
